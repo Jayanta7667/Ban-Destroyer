@@ -1,1 +1,194 @@
-# Ban-Destroyer
+<!DOCTYPE html><html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moai Siege</title>
+<style>
+body{margin:0;background:#0f0f0f;color:#fff;text-align:center;font-family:Arial;}
+canvas{background:#1a1a1a;display:block;margin:auto;}
+h2{margin:10px;}
+#startBtn{
+ padding:12px 25px;
+ background:#00ff99;
+ border:none;
+ font-size:18px;
+ margin:10px;
+ cursor:pointer;
+}
+</style>
+</head><body><h2 id="levelText">Moai Siege - Level 1</h2>
+<button id="startBtn">START GAME</button>
+<canvas id="c" width="360" height="500"></canvas><script>
+let canvas=document.getElementById("c");
+let ctx=canvas.getContext("2d");
+
+let started=false;
+
+// 👉 IMAGE
+let moai=new Image();
+moai.src="img1.jpg"; // throw
+
+let ban=new Image();
+ban.src="img2.jpg"; // target
+
+// 🔊 SOUND (auto loop)
+let bgm=new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_7c1b0c0f6e.mp3");
+bgm.loop=true;
+
+// 🔊 hit sound
+let hitSound=new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_9d6e0b6c2b.mp3");
+
+let level=1;
+
+let player={x:80,y:400,vx:0,vy:0,drag:false};
+let gravity=0.5;
+
+let blocks=[];
+
+// START BUTTON (important for sound)
+document.getElementById("startBtn").onclick=()=>{
+ started=true;
+ bgm.play();
+ loadLevel();
+};
+
+// LEVEL
+function loadLevel(){
+ document.getElementById("levelText").innerText="Moai Siege - Level "+level;
+ blocks=[];
+
+ if(level==1){
+  blocks=[{x:260,y:420,w:40,h:40,alive:true}];
+ }
+
+ if(level==2){
+  blocks=[
+   {x:260,y:420,w:40,h:40,alive:true},
+   {x:260,y:380,w:40,h:40,alive:true}
+  ];
+ }
+
+ if(level==3){
+  blocks=[
+   {x:260,y:420,w:40,h:40,alive:true},
+   {x:260,y:380,w:40,h:40,alive:true},
+   {x:220,y:420,w:40,h:40,alive:true}
+  ];
+ }
+
+ if(level==4){
+  blocks=[
+   {x:260,y:420,w:40,h:40,alive:true},
+   {x:260,y:380,w:40,h:40,alive:true},
+   {x:220,y:420,w:40,h:40,alive:true},
+   {x:220,y:380,w:40,h:40,alive:true}
+  ];
+ }
+
+ player.x=80; player.y=400;
+ player.vx=0; player.vy=0;
+}
+
+// DRAW
+function draw(){
+ ctx.clearRect(0,0,360,500);
+
+ if(!started){
+  ctx.fillStyle="#fff";
+  ctx.font="20px Arial";
+  ctx.fillText("Press START",120,250);
+  return;
+ }
+
+ // ground
+ ctx.fillStyle="#444";
+ ctx.fillRect(0,450,360,50);
+
+ // slingshot line
+ if(player.drag){
+  ctx.strokeStyle="#00ff99";
+  ctx.beginPath();
+  ctx.moveTo(80,400);
+  ctx.lineTo(player.x,player.y);
+  ctx.stroke();
+ }
+
+ // player
+ ctx.drawImage(moai,player.x-25,player.y-25,50,50);
+
+ // blocks
+ blocks.forEach(b=>{
+  if(b.alive){
+   ctx.drawImage(ban,b.x,b.y,b.w,b.h);
+  }
+ });
+}
+
+// UPDATE
+function update(){
+ if(!started) return;
+
+ if(!player.drag){
+  player.vy+=gravity;
+  player.x+=player.vx;
+  player.y+=player.vy;
+
+  if(player.y>430){
+   player.y=430;
+   player.vy*=-0.4;
+   player.vx*=0.8;
+  }
+
+  blocks.forEach(b=>{
+   if(b.alive &&
+      player.x>b.x && player.x<b.x+b.w &&
+      player.y>b.y && player.y<b.y+b.h){
+        b.alive=false;
+        hitSound.play();
+   }
+  });
+
+  if(blocks.every(b=>!b.alive)){
+    setTimeout(()=>{
+      if(level<4){
+        level++;
+        loadLevel();
+      }else{
+        alert("🔥 Game Complete!");
+        level=1;
+        loadLevel();
+      }
+    },400);
+  }
+ }
+}
+
+// LOOP
+function loop(){
+ update();
+ draw();
+ requestAnimationFrame(loop);
+}
+loop();
+
+// CONTROL
+canvas.addEventListener("mousedown",()=>{
+ if(started) player.drag=true;
+});
+
+canvas.addEventListener("mouseup",()=>{
+ if(!started) return;
+
+ player.drag=false;
+ player.vx=(80-player.x)/5;
+ player.vy=(400-player.y)/5;
+});
+
+canvas.addEventListener("mousemove",(e)=>{
+ if(player.drag){
+  let r=canvas.getBoundingClientRect();
+  player.x=e.clientX-r.left;
+  player.y=e.clientY-r.top;
+ }
+});
+</script></body>
+</html>
