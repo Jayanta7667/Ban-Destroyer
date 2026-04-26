@@ -3,102 +3,91 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ban Destroyer</title>
 <style>
-body{margin:0;background:#0f0f0f;color:#fff;text-align:center;font-family:Arial;}
-canvas{background:#1a1a1a;display:block;margin:auto;}
-h2{margin:10px;}
-button{
- padding:12px 25px;
- background:#00ff99;
- border:none;
- font-size:18px;
- margin:10px;
- cursor:pointer;
-}
+body{margin:0;background:#111;color:#fff;text-align:center;font-family:Arial;}
+canvas{background:#222;display:block;margin:auto;}
+button{padding:10px 20px;background:#00ff99;border:none;margin:10px;font-size:18px;}
 </style>
 </head><body><h2 id="levelText">Level 1</h2>
-<button onclick="startGame()">START GAME</button>
+<button onclick="startGame()">START</button>
 <canvas id="c" width="360" height="500"></canvas><script>
-let canvas=document.getElementById("c");
-let ctx=canvas.getContext("2d");
+let c=document.getElementById("c");
+let ctx=c.getContext("2d");
 
-let started=false;
-
-// 🔥 IMAGE (your repo names)
 let moai=new Image();
 moai.src="moai1.png";
 
 let ban=new Image();
 ban.src="Ban2.jpg";
 
-// 🔊 SOUND
-let bgm=new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_7c1b0c0f6e.mp3");
-bgm.loop=true;
-
-let hit=new Audio("https://cdn.pixabay.com/audio/2022/03/15/audio_9d6e0b6c2b.mp3");
-
+let started=false;
 let level=1;
 
-let player={x:80,y:400,vx:0,vy:0,drag:false};
-let gravity=0.5;
+let gravity=0.7;
+
+let player={x:80,y:400,vx:0,vy:0,drag:false,launched:false};
 
 let blocks=[];
 
 function startGame(){
  started=true;
- bgm.play();
  loadLevel();
 }
 
-// LEVELS
 function loadLevel(){
  document.getElementById("levelText").innerText="Level "+level;
+
  blocks=[];
 
  if(level==1){
-  blocks=[{x:260,y:420,w:40,h:40,alive:true}];
+  blocks=[{x:260,y:420,w:60,h:60,alive:true}];
  }
 
  if(level==2){
   blocks=[
-   {x:260,y:420,w:40,h:40,alive:true},
-   {x:260,y:380,w:40,h:40,alive:true}
+   {x:260,y:420,w:60,h:60,alive:true},
+   {x:260,y:350,w:60,h:60,alive:true}
   ];
  }
 
  if(level==3){
   blocks=[
-   {x:260,y:420,w:40,h:40,alive:true},
-   {x:260,y:380,w:40,h:40,alive:true},
-   {x:220,y:420,w:40,h:40,alive:true}
+   {x:260,y:420,w:60,h:60,alive:true},
+   {x:260,y:350,w:60,h:60,alive:true},
+   {x:200,y:420,w:60,h:60,alive:true}
   ];
  }
 
  if(level==4){
   blocks=[
-   {x:260,y:420,w:40,h:40,alive:true},
-   {x:260,y:380,w:40,h:40,alive:true},
-   {x:220,y:420,w:40,h:40,alive:true},
-   {x:220,y:380,w:40,h:40,alive:true}
+   {x:260,y:420,w:60,h:60,alive:true},
+   {x:260,y:350,w:60,h:60,alive:true},
+   {x:200,y:420,w:60,h:60,alive:true},
+   {x:200,y:350,w:60,h:60,alive:true}
   ];
  }
 
- player.x=80; player.y=400;
- player.vx=0; player.vy=0;
+ resetPlayer();
 }
 
-// DRAW
+function resetPlayer(){
+ player.x=80;
+ player.y=400;
+ player.vx=0;
+ player.vy=0;
+ player.launched=false;
+}
+
 function draw(){
  ctx.clearRect(0,0,360,500);
 
  if(!started){
-  ctx.fillStyle="#fff";
   ctx.fillText("Press START",130,250);
   return;
  }
 
  // ground
- ctx.fillStyle="#444";
- ctx.fillRect(0,450,360,50);
+ ctx.fillStyle="#555";
+ ctx.fillRect(0,440,360,60);
 
  // slingshot line
  if(player.drag){
@@ -109,10 +98,10 @@ function draw(){
   ctx.stroke();
  }
 
- // player (Moai)
- ctx.drawImage(moai,player.x-25,player.y-25,50,50);
+ // player
+ ctx.drawImage(moai,player.x-35,player.y-35,70,70);
 
- // targets (Ban)
+ // blocks
  blocks.forEach(b=>{
   if(b.alive){
    ctx.drawImage(ban,b.x,b.y,b.w,b.h);
@@ -120,46 +109,43 @@ function draw(){
  });
 }
 
-// UPDATE
 function update(){
  if(!started) return;
 
- if(!player.drag){
+ if(player.launched){
   player.vy+=gravity;
   player.x+=player.vx;
   player.y+=player.vy;
 
-  if(player.y>430){
-   player.y=430;
-   player.vy*=-0.4;
-   player.vx*=0.8;
+  if(player.y>420){
+   resetPlayer(); // 🔥 reset like angry birds
   }
 
+  // hit
   blocks.forEach(b=>{
    if(b.alive &&
-      player.x>b.x && player.x<b.x+b.w &&
-      player.y>b.y && player.y<b.y+b.h){
-        b.alive=false;
-        hit.play();
+     player.x>b.x && player.x<b.x+b.w &&
+     player.y>b.y && player.y<b.y+b.h){
+       b.alive=false;
    }
   });
 
+  // win
   if(blocks.every(b=>!b.alive)){
     setTimeout(()=>{
       if(level<4){
         level++;
         loadLevel();
       }else{
-        alert("🔥 Game Complete!");
+        alert("🔥 WIN!");
         level=1;
         loadLevel();
       }
-    },400);
+    },300);
   }
  }
 }
 
-// LOOP
 function loop(){
  update();
  draw();
@@ -167,20 +153,24 @@ function loop(){
 }
 loop();
 
-// CONTROL
-canvas.addEventListener("mousedown",()=>{ if(started) player.drag=true; });
-
-canvas.addEventListener("mouseup",()=>{
- if(!started) return;
-
- player.drag=false;
- player.vx=(80-player.x)/5;
- player.vy=(400-player.y)/5;
+// controls
+c.addEventListener("mousedown",()=>{
+ if(!player.launched) player.drag=true;
 });
 
-canvas.addEventListener("mousemove",(e)=>{
+c.addEventListener("mouseup",()=>{
  if(player.drag){
-  let r=canvas.getBoundingClientRect();
+  player.drag=false;
+  player.launched=true;
+
+  player.vx=(80-player.x)/3;
+  player.vy=(400-player.y)/3;
+ }
+});
+
+c.addEventListener("mousemove",(e)=>{
+ if(player.drag){
+  let r=c.getBoundingClientRect();
   player.x=e.clientX-r.left;
   player.y=e.clientY-r.top;
  }
