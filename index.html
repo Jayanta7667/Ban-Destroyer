@@ -1,15 +1,37 @@
 <!DOCTYPE html><html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ban Destroyer</title>
-<style>
-body{margin:0;background:#111;color:#fff;text-align:center;font-family:Arial;}
-canvas{background:#222;display:block;margin:auto;}
-button{padding:10px 20px;background:#00ff99;border:none;margin:10px;font-size:18px;}
-</style>
-</head><body><h2 id="levelText">Level 1</h2>
-<button onclick="startGame()">START</button>
-<canvas id="c" width="360" height="500"></canvas><script>
+<title>Ban Destroyer</title><style>
+body{
+ margin:0;
+ background:linear-gradient(#0f2027,#203a43,#2c5364);
+ font-family:Arial;
+ text-align:center;
+ color:#fff;
+}
+
+h2{margin:10px;}
+
+button{
+ padding:12px 30px;
+ background:#00ffcc;
+ border:none;
+ border-radius:8px;
+ font-size:18px;
+ cursor:pointer;
+ box-shadow:0 0 10px #00ffcc;
+}
+
+canvas{
+ display:block;
+ margin:10px auto;
+ border-radius:12px;
+ background:linear-gradient(#1e1e1e,#2a2a2a);
+ box-shadow:0 0 20px rgba(0,0,0,0.6);
+}
+</style></head><body><h2 id="levelText">Ban Destroyer</h2>
+<button onclick="startGame()">START GAME</button>
+<canvas id="c" width="400" height="600"></canvas><script>
 let c=document.getElementById("c");
 let ctx=c.getContext("2d");
 
@@ -22,10 +44,9 @@ ban.src="Ban2.jpg";
 let started=false;
 let level=1;
 
-let gravity=0.7;
+let gravity=0.6;
 
-let player={x:80,y:400,vx:0,vy:0,drag:false,launched:false};
-
+let player={x:100,y:450,vx:0,vy:0,drag:false,launched:false};
 let blocks=[];
 
 function startGame(){
@@ -39,30 +60,30 @@ function loadLevel(){
  blocks=[];
 
  if(level==1){
-  blocks=[{x:260,y:420,w:60,h:60,alive:true}];
+  blocks=[{x:280,y:500,w:60,h:60,alive:true}];
  }
 
  if(level==2){
   blocks=[
-   {x:260,y:420,w:60,h:60,alive:true},
-   {x:260,y:350,w:60,h:60,alive:true}
+   {x:280,y:500,w:60,h:60,alive:true},
+   {x:280,y:430,w:60,h:60,alive:true}
   ];
  }
 
  if(level==3){
   blocks=[
-   {x:260,y:420,w:60,h:60,alive:true},
-   {x:260,y:350,w:60,h:60,alive:true},
-   {x:200,y:420,w:60,h:60,alive:true}
+   {x:280,y:500,w:60,h:60,alive:true},
+   {x:280,y:430,w:60,h:60,alive:true},
+   {x:220,y:500,w:60,h:60,alive:true}
   ];
  }
 
  if(level==4){
   blocks=[
-   {x:260,y:420,w:60,h:60,alive:true},
-   {x:260,y:350,w:60,h:60,alive:true},
-   {x:200,y:420,w:60,h:60,alive:true},
-   {x:200,y:350,w:60,h:60,alive:true}
+   {x:280,y:500,w:60,h:60,alive:true},
+   {x:280,y:430,w:60,h:60,alive:true},
+   {x:220,y:500,w:60,h:60,alive:true},
+   {x:220,y:430,w:60,h:60,alive:true}
   ];
  }
 
@@ -70,38 +91,54 @@ function loadLevel(){
 }
 
 function resetPlayer(){
- player.x=80;
- player.y=400;
+ player.x=100;
+ player.y=450;
  player.vx=0;
  player.vy=0;
  player.launched=false;
 }
 
 function draw(){
- ctx.clearRect(0,0,360,500);
+
+ ctx.clearRect(0,0,400,600);
 
  if(!started){
-  ctx.fillText("Press START",130,250);
+  ctx.fillText("Press Start",150,300);
   return;
  }
 
  // ground
  ctx.fillStyle="#555";
- ctx.fillRect(0,440,360,60);
+ ctx.fillRect(0,550,400,50);
+
+ // aim dotted line
+ if(player.drag){
+  ctx.fillStyle="#00ffcc";
+
+  for(let i=1;i<6;i++){
+   ctx.beginPath();
+   ctx.arc(
+    100+(100-player.x)/3*i,
+    450+(450-player.y)/3*i,
+    4,0,Math.PI*2
+   );
+   ctx.fill();
+  }
+ }
 
  // slingshot line
  if(player.drag){
-  ctx.strokeStyle="#00ff99";
+  ctx.strokeStyle="#00ffcc";
   ctx.beginPath();
-  ctx.moveTo(80,400);
+  ctx.moveTo(100,450);
   ctx.lineTo(player.x,player.y);
   ctx.stroke();
  }
 
  // player
- ctx.drawImage(moai,player.x-35,player.y-35,70,70);
+ ctx.drawImage(moai,player.x-40,player.y-40,80,80);
 
- // blocks
+ // targets
  blocks.forEach(b=>{
   if(b.alive){
    ctx.drawImage(ban,b.x,b.y,b.w,b.h);
@@ -110,6 +147,7 @@ function draw(){
 }
 
 function update(){
+
  if(!started) return;
 
  if(player.launched){
@@ -117,11 +155,10 @@ function update(){
   player.x+=player.vx;
   player.y+=player.vy;
 
-  if(player.y>420){
-   resetPlayer(); // 🔥 reset like angry birds
+  if(player.y>520){
+   setTimeout(resetPlayer,200);
   }
 
-  // hit
   blocks.forEach(b=>{
    if(b.alive &&
      player.x>b.x && player.x<b.x+b.w &&
@@ -130,18 +167,17 @@ function update(){
    }
   });
 
-  // win
   if(blocks.every(b=>!b.alive)){
-    setTimeout(()=>{
-      if(level<4){
-        level++;
-        loadLevel();
-      }else{
-        alert("🔥 WIN!");
-        level=1;
-        loadLevel();
-      }
-    },300);
+   setTimeout(()=>{
+    if(level<4){
+     level++;
+     loadLevel();
+    }else{
+     alert("🔥 You Win!");
+     level=1;
+     loadLevel();
+    }
+   },300);
   }
  }
 }
@@ -163,8 +199,8 @@ c.addEventListener("mouseup",()=>{
   player.drag=false;
   player.launched=true;
 
-  player.vx=(80-player.x)/3;
-  player.vy=(400-player.y)/3;
+  player.vx=(100-player.x)/3;
+  player.vy=(450-player.y)/3;
  }
 });
 
@@ -173,6 +209,16 @@ c.addEventListener("mousemove",(e)=>{
   let r=c.getBoundingClientRect();
   player.x=e.clientX-r.left;
   player.y=e.clientY-r.top;
+
+  // drag limit
+  let dx=player.x-100;
+  let dy=player.y-450;
+  let dist=Math.sqrt(dx*dx+dy*dy);
+
+  if(dist>80){
+   player.x=100+dx/dist*80;
+   player.y=450+dy/dist*80;
+  }
  }
 });
 </script></body>
